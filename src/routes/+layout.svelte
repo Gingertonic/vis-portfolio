@@ -30,8 +30,6 @@
 
 <script>
     import { page } from '$app/stores';
-    import "../style.css";
-    export const prerender = true;
     let pages = [
         {url: "./", title: "Home"},
         {url: "./projects", title: "Projects"},
