@@ -1,0 +1,44 @@
+:root {
+    --colour-highlight: orange;
+    --colour-highlight-30: rgba(255,165,0,0.3);
+    --colour-accent: orangered;
+}
+
+body {
+    /* Set line height to 1.5 times the font size
+       and use the OS’s UI font as the website font
+     */
+    font: 100%/1.5 system-ui;
+    max-width: 100ch;
+    margin-inline: auto;
+    padding: 5ch;
+   }
+
+img {
+    max-width: 100%;
+}
+
+.projects {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15em, 1fr));
+    grid-gap: 1em;
+}
+
+article {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 3;
+}
+
+article h2 {
+    margin: 0;
+}
+
+h1 {
+    font-size: 400%;
+}
+
+h1,h2,h3,h4,h5,h6 {
+    line-height: 1.1;
+    text-wrap: balance;
+}
