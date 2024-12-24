@@ -17,14 +17,51 @@
     //     { value: 5, label: "cherries" }
     // ];
 
-    let rolledData = d3.rollups(projects, v => v.length, d => d.year);
-    let pieData = rolledData.map(([year, count]) => {
-        return { value: count, label: year };
+    let query = "";
+    let filteredProjects;
+    $: filteredProjects = projects.filter(project => {
+        if (query) {
+            let values = Object.values(project).join("\n").toLowerCase();
+	        return values.includes(query.toLowerCase());
+        }
+
+        return true;
     });
+
+    let selectedYearIdx = -1;
+    let selectedYear;
+    $: selectedYear = selectedYearIdx > -1 ? pieData[selectedYearIdx].label : null;
+
+    let filteredByYear;
+    $: filteredByYear = filteredProjects.filter(project => {
+        if (selectedYear) {
+            return project.year === selectedYear;
+        }
+
+        return true;
+    });
+
+    let pieData;
+
+    $: {
+        pieData = {};
+        let rolledData = d3.rollups(filteredProjects, v => v.length, d => d.year);
+        pieData = rolledData.map(([year, count]) => {
+            return { value: count, label: year };
+        });
+    }
 </script>
 
 <h1>Projects: {projects.length}</h1>
 
-<Pie data={pieData}/>
+<Pie data={pieData} bind:selectedIdx={selectedYearIdx} />
 
-<ProjectsList data={projects} />
+<input 
+    type="search" 
+    bind:value={query}
+    aria-label="Search projects" 
+    placeholder="🔍 Search projects…" />
+
+<p>Results: {filteredByYear.length}</p>
+
+<ProjectsList data={filteredByYear} />
