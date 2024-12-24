@@ -4,6 +4,10 @@
     --colour-accent: orangered;
 }
 
+html {
+    color-scheme: light dark;
+}
+
 body {
     /* Set line height to 1.5 times the font size
        and use the OS’s UI font as the website font
@@ -25,4 +29,21 @@ h1 {
 h1,h2,h3,h4,h5,h6 {
     line-height: 1.1;
     text-wrap: balance;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+dl dt {
+    grid-row: 1;
+    text-transform: uppercase;
+    font-size: 80%;
+}
+
+dl dd {
+    grid-row: 2;
+    margin: 0;
+    font-size: 120%;
 }
