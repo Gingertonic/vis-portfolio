@@ -1,5 +1,7 @@
-<script>
-    export let data = { title: '', image: '', description: '', year: 2024 };
+<script lang="ts">
+    import type { ProjectData } from '$lib/../types';
+    
+    export let data: ProjectData = { title: '', image: '', description: '', year: 2024 };
     export let hLevel = '2';
 </script>
 

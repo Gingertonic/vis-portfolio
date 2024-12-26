@@ -1,6 +1,8 @@
-<script>
-    import Project from "$lib/Project.svelte";  
-    export let data = [{ title: '', image: '', description: '' }];
+<script lang="ts">
+    import Project from "$lib/Project.svelte";
+    import type { ProjectData } from "$lib/../types";
+    
+    export let data: ProjectData[] = [{ title: '', image: '', description: '', year: 2024 }];
     export let hLevel = '2';
 </script>
 

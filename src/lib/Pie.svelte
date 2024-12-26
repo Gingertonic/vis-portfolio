@@ -85,21 +85,35 @@
 <script lang="ts">
     import * as d3 from 'd3';
 
-    type DataItem = { value: number, label: number };
+    interface DataItem {
+        value: number;
+        label: string;
+    }
+
+    type PieArcDatum = d3.PieArcDatum<DataItem>;
+
     export let data: DataItem[] = [];
     export let selectedIdx = -1;
 
-    let arcGenerator = d3.arc().innerRadius(10).outerRadius(50);
-    let colors = d3.scaleOrdinal(d3.schemeTableau10);
+    const arcGenerator = d3.arc<PieArcDatum>()
+        .innerRadius(10)
+        .outerRadius(50);
 
-    let sliceGenerator = d3.pie<DataItem>().value((d: DataItem) => d.value);
-    let arcData;
-    let arcs;
-    $: arcData = sliceGenerator(data);
-    $: arcs = arcData.map<DataItem>((d: DataItem) => arcGenerator(d));
+    const colors = d3.scaleOrdinal(d3.schemeTableau10);
 
-    function toggleWedge (i, e) {
-        if (!e.key || e.key === "Enter") {          
+    const sliceGenerator = d3.pie<DataItem>()
+        .value((d) => d.value);
+
+    let arcData = sliceGenerator(data);
+    let arcs = arcData.map(d => arcGenerator(d) ?? '');
+
+    $: {
+        arcData = sliceGenerator(data);
+        arcs = arcData.map(d => arcGenerator(d) ?? '');
+    }
+
+    function toggleWedge(i: number, e: MouseEvent | KeyboardEvent): void {
+        if (!(e instanceof KeyboardEvent) || e.key === "Enter") {          
             selectedIdx = selectedIdx === i ? -1 : i;
         }
     }
@@ -113,7 +127,7 @@
                 --start-angle: { arcData[i]?.startAngle }rad;
                 --end-angle: { arcData[i]?.endAngle }rad;"
                 d={arc} 
-                fill={colors(i)}
+                fill={colors(i.toString())}
                 class:selected={selectedIdx===i}
                 on:click={e => toggleWedge(i, e)}
                 on:keyup={e => toggleWedge(i, e)}
@@ -125,7 +139,7 @@
     
     <ul class="legend">
         {#each data as d, index}
-            <li style="--color: { colors(index) }">
+            <li style="--color: { colors(index.toString()) }">
                 <span class="swatch"></span>
                 {d.label} <em>({d.value})</em>
             </li>
