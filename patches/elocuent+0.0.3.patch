@@ -1,0 +1,16 @@
+diff --git a/node_modules/elocuent/src/parse-line.js b/node_modules/elocuent/src/parse-line.js
+index f46a3d8..99c4037 100644
+--- a/node_modules/elocuent/src/parse-line.js
++++ b/node_modules/elocuent/src/parse-line.js
+@@ -8,8 +8,10 @@ export default function (line, context = {}) {
+ 
+ 	ret.commit = line.match(/^[0-9a-f]{6,}/i)[0];
+ 	line = line.slice(ret.commit.length + 1);
++	console.log('line', line);
+ 
+-	let commitInfo = line.match(/^.*?\((?<author>.+?)\s+(?<date>\d{4}-\d{2}-\d{2}) (?<time>\d{2}:\d{2}:\d{2}) (?<timezone>-?\d{4})\s+\d+\) /);
++	// let commitInfo = line.match(/^.*?\((?<author>.+?)\s+(?<date>\d{4}-\d{2}-\d{2}) (?<time>\d{2}:\d{2}:\d{2}) (?<timezone>-?\d{4})\s+\d+\) /);
++	let commitInfo = line.match(/^.*?\((?<author>.+?)\s+(?<date>\d{4}-\d{2}-\d{2}) (?<time>\d{2}:\d{2}:\d{2}) (?<timezone>[+-]\d{4})\s+\d+\) /);	console.log('commitInfo', commitInfo);
+ 	
+ 	if (commitInfo === null) {
+ 		console.error("No match for", line);
