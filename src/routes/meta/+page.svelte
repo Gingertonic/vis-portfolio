@@ -5,6 +5,40 @@
     .gridlines {
         stroke-opacity: .2;
     }
+    dl.info {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        grid-column-gap: 10px;
+        grid-row-gap: 5px;
+        padding: 10px;
+        transition-duration: 500ms;
+        transition-property: opacity, visibility;
+
+        &[hidden]:not(:hover, :focus-within) {
+            opacity: 0;
+            visibility: hidden;
+        }
+        font-size: 60%;
+    }
+    .tooltip {
+        position: fixed;
+        top: 1em;
+        left: 1em;
+        background-color: rgba(45,45,100,0.6);
+        backdrop-filter: blur(4px);
+        width: 400px;
+        height: 100px;
+        box-shadow: 2px 2px orange;
+    }
+    circle {
+        transition: 200ms;
+        transform-origin: center;
+        transform-box: fill-box;
+        &:hover {
+            transform: scale(1.5);
+        }
+    }
 </style>
 
 <script lang="ts">
@@ -12,6 +46,12 @@
     import * as d3 from "d3";
     import { onMount } from "svelte";
     import type { StatItem } from "../../types";
+    import {
+        computePosition,
+        autoPlacement,
+        offset,
+        type ComputePositionReturn,
+    } from '@floating-ui/dom';
 
     interface CommitData {
         commit: string;
@@ -60,6 +100,31 @@
     let yAxis: SVGGElement;
     let yAxisGridlines: SVGGElement;
     let colorScale: d3.ScaleLinear<string, string>;
+
+    let commitTooltip: HTMLElement;
+    let tooltipPosition: ComputePositionReturn = {
+        x: 0, y: 0,
+        placement: "top",
+        strategy: "fixed",
+        middlewareData: {}
+    };
+
+    async function dotInteraction (index: number, e: Event) {
+        let hoveredDot = e.target;
+        hoveredCommitIdx = index;
+        if (e.type === "mouseenter" || e.type === "focus") {
+            tooltipPosition = await computePosition(hoveredDot as HTMLElement, commitTooltip, {
+                strategy: "fixed", // because we use position: fixed
+                middleware: [
+                    offset(5), // spacing from tooltip to dot
+                    autoPlacement() // see https://floating-ui.com/docs/autoplacement
+                ],
+            });
+        }
+        else if (e.type === "mouseleave" || e.type === "blur") {
+            hoveredCommitIdx = -1;
+        }
+    }
 
     yScale = d3.scaleLinear()
         .domain([0, 24])
@@ -126,6 +191,10 @@
     let mostLines: number;
     let activePeriod: string;
 
+    let hoveredCommitIdx = -1;
+    let hoveredCommit: Partial<CommitInstance> = {};
+    $: hoveredCommit = commits[hoveredCommitIdx] ?? {};
+
     $: if (data) {
         // Create stats block
         const rollupPeriods = d3.rollups(
@@ -157,7 +226,6 @@
 <h1>Meta</h1>
 
 <Stats data={stats} />
-
 <p>Commits by time of day</p>
 <svg viewBox="0 0 {width} {height}">
     <g transform="translate(0, {usableArea.bottom})" bind:this={xAxis} />
@@ -170,7 +238,34 @@
                 cy={ yScale(commit.hourFrac) }
                 r="5"
                 fill={ colorScale(commit.hourFrac) }
+                on:mouseenter={e => dotInteraction(index, e)}
+	            on:mouseleave={e => dotInteraction(index, e)}
+	            on:focus={e => dotInteraction(index, e)}
+	            on:blur={e => dotInteraction(index, e)}
+                tabindex="0"
+                aria-describedby="commit-tooltip"
+                role="tooltip"
+                aria-haspopup="true"
             />
         {/each}
     </g>
 </svg>
+<dl id="commit-tooltip" class="info tooltip" 
+    bind:this={commitTooltip}
+    hidden={hoveredCommitIdx === -1}
+    style="top: {tooltipPosition.y}px; left: {tooltipPosition.x}px"
+>
+    <dt>Commit</dt>
+    <dd><a href="{ hoveredCommit.url }" target="_blank">{ hoveredCommit.id }</a></dd>
+
+    <dt>Date</dt>
+    <dd>{ hoveredCommit.datetime?.toLocaleString("en", {dateStyle: "full"}) }</dd>
+   
+    <dt>Time</dt>
+    <dd>{ hoveredCommit.time }</dd>
+    
+    <dt># Lines</dt>
+    <dd>{ hoveredCommit.totalLines }</dd>
+
+    <!-- Add: Time, author, lines edited -->
+</dl>
