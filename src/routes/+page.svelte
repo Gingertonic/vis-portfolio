@@ -2,9 +2,31 @@
 	<title>Home</title>
 </svelte:head>
 
-<script>
+<script lang="ts">
 	import projects from '$lib/projects.json'; 
     import ProjectsList from "$lib/ProjectsList.svelte";
+	import Stats from '$lib/Stats.svelte';
+
+	import { onMount } from 'svelte';
+    import type { StatItem } from '../types';
+	let resp: Response;
+	let stats: StatItem[] = []
+	let error: Error | null = null;
+
+	onMount(async () => {
+		try {
+			resp = await fetch('https://api.github.com/users/gingertonic')
+			const data = await resp.json();
+			stats = [
+				{ title: 'Followers', value: data.followers },
+				{ title: 'Following', value: data.following },
+				{ title: 'Public Repos', value: data.public_repos },
+				{ title: 'Public Gists', value: data.public_gists }
+			]
+		} catch (e) {
+            error = e instanceof Error ? e : new Error('Unknown error occurred');
+		}
+	});
 </script>
 
 <h1>Gingertonic</h1>
@@ -13,32 +35,17 @@
 
 <section>
 	<h2>Github Data</h2>
-	{#await fetch("https://api.github.com/users/gingertonic") }
+	{#if !resp }
 		<p>Loading...</p>
-	{:then response}
-		{#await response.json()}
-			<p>Decoding...</p>
-		{:then data}
-			<dl>
-				<dt>Followers</dt>
-				<dd>{data.followers}</dd>
-				<dt>Following</dt>
-				<dd>{data.following}</dd>
-				<dt>Public Repos</dt>
-				<dd>{data.public_repos}</dd>
-				<dt>Public Gists</dt>
-				<dd>{data.public_gists}</dd>
-			</dl>
-		{:catch error}
-			<p class="error">
-				Something went wrong: {error.message}
-			</p>
-		{/await}
-	{:catch error}
+	{:else if !stats}
+		<p>Decoding...</p>
+	{:else if stats}
+		<Stats data={stats} />
+	{:else}
 		<p class="error">
-			Something went wrong: {error.message}
+			Something went wrong: {error?.message ?? 'Unknown error'}
 		</p>
-	{/await}
+	{/if}
 </section>
 
 <h2>Latest projects</h2>

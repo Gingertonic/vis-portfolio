@@ -4,3 +4,8 @@ export interface ProjectData {
     description: string;
     year: number;
 }
+
+export type StatItem = {
+    title: string;
+    value: string | number;
+}
