@@ -58,10 +58,7 @@
     }
 
     .selected {
-        --color: orangered !important;
-
         &:is(path) {
-            fill: var(--color);
             opacity: 1 !important;
         }
     }
