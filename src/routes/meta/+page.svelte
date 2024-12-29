@@ -49,6 +49,14 @@
     circle.selected {
         fill: orange;
     }
+    .dot-container {
+        cursor: pointer;
+        outline: none;
+    }
+    .dot-container:focus circle {
+        stroke: orange;
+        stroke-width: 2px;
+    }
     @keyframes marching-ants {
         to {
             stroke-dashoffset: -2 /* 5 + 3 */
@@ -297,21 +305,25 @@
     <g class="gridlines" transform="translate({usableArea.left}, 0)" bind:this={yAxisGridlines} />
     <g class="dots">
         {#each commits as commit, index }
-            <circle
-                class:selected={ isCommitSelected(commit) }
-                cx={ xScale(commit.datetime) }
-                cy={ yScale(commit.hourFrac) }
-                r={ rScale(commit.totalLines) }
-                fill={ colorScale(commit.hourFrac) }
-                on:mouseenter={e => dotInteraction(index, e)}
-	            on:mouseleave={e => dotInteraction(index, e)}
-	            on:focus={e => dotInteraction(index, e)}
-	            on:blur={e => dotInteraction(index, e)}
+            <g 
+                role="button"
                 tabindex="0"
+                class="dot-container"
+                on:mouseenter={e => dotInteraction(index, e)}
+                on:mouseleave={e => dotInteraction(index, e)}
+                on:focus={e => dotInteraction(index, e)}
+                on:blur={e => dotInteraction(index, e)}
+                on:keydown={e => e.key === 'Enter' && dotInteraction(index, e)}
                 aria-describedby="commit-tooltip"
-                role="tooltip"
-                aria-haspopup="true"
-            />
+            >
+                <circle
+                    class:selected={isCommitSelected(commit)}
+                    cx={xScale(commit.datetime)}
+                    cy={yScale(commit.hourFrac)}
+                    r={rScale(commit.totalLines)}
+                    fill={colorScale(commit.hourFrac)}
+                />
+            </g>
         {/each}
     </g>
 </svg>
