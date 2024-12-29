@@ -47,7 +47,7 @@
         }
     }
     circle.selected {
-        fill: orangered;
+        fill: orange;
     }
     @keyframes marching-ants {
         to {
@@ -99,6 +99,7 @@
         datetime: Date;
         hourFrac: number;
         totalLines: number;
+        lines?: CommitData[];
     }
     let data: d3.DSVParsedArray<CommitData>;
     let totalLines: number;
@@ -132,14 +133,21 @@
         strategy: "fixed",
         middlewareData: {}
     };
-    type Coords = { x: number, y: number };
     let svg: SVGGElement;
 
     let brushSelection: any[][] | null;
 
     $: selectedCommits = brushSelection ? commits.filter(isCommitSelected) : [];
     $: hasSelection = brushSelection && selectedCommits.length > 0;
-
+    $: selectedLines = (hasSelection ? selectedCommits : commits).flatMap(d => d.lines);
+    $: languageBreakdown = d3.rollups(
+        selectedLines?.filter((d): d is CommitData => d !== undefined) ?? [],
+        group => group.length,
+        d => d.type
+    );
+    $: {
+        console.log('Language breakdown:', languageBreakdown);
+    }
     async function dotInteraction (index: number, e: Event) {
         let hoveredDot = e.target;
         hoveredCommitIdx = index;
@@ -269,7 +277,7 @@
         yScale = d3.scaleLinear([24, 0], [usableArea.bottom, usableArea.top]);
         const dtsMinMax = d3.extent(d3.map(commits, c => c.datetime)) as Date[];
         xScale = d3.scaleTime(dtsMinMax, [usableArea.left, usableArea.right]);
-        colorScale = d3.scaleLinear<string>().domain([0,24]).range(["orange", "royalBlue"])
+        colorScale = d3.scaleLinear<string>().domain([0,24]).range(["orangered", "royalBlue"])
 
         const linesMinMax = d3.extent(d3.map(commits, c => c.totalLines)) as number[];        
         rScale = d3.scaleSqrt<number>(linesMinMax, [2, 30])
@@ -325,3 +333,8 @@
 
     <!-- Add: Time, author, lines edited -->
 </dl>
+
+<Stats data={languageBreakdown.map(l => ({
+        title: l[0], 
+        value: `${d3.format(".1f")(selectedLines.length / l[1])}%`
+    }))} />
