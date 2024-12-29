@@ -75,6 +75,7 @@
         offset,
         type ComputePositionReturn,
     } from '@floating-ui/dom';
+    import Pie from "$lib/Pie.svelte";
 
     interface CommitData {
         commit: string;
@@ -338,3 +339,5 @@
         title: l[0], 
         value: `${d3.format(".1f")(selectedLines.length / l[1])}%`
     }))} />
+
+<Pie data={languageBreakdown.map(l => ({ value: l[1], label: l[0]}))} />
