@@ -1,3 +1,7 @@
+<svelte:head>
+	<title>Meta</title>
+</svelte:head>
+
 <style>
 	svg {
 		overflow: visible;
@@ -41,6 +45,22 @@
         &:not(:hover) {
             fill-opacity: 0.4;
         }
+    }
+    circle.selected {
+        fill: orangered;
+    }
+    @keyframes marching-ants {
+        to {
+            stroke-dashoffset: -2 /* 5 + 3 */
+        }
+    }
+
+    svg :global(.selection) {
+        fill-opacity: 10%;
+        stroke: orange;
+        stroke-opacity: 70%;
+        stroke-dasharray: 1 6;
+        animation: marching-ants 0.5s linear infinite alternate-reverse;
     }
 </style>
 
@@ -112,6 +132,13 @@
         strategy: "fixed",
         middlewareData: {}
     };
+    type Coords = { x: number, y: number };
+    let svg: SVGGElement;
+
+    let brushSelection: any[][] | null;
+
+    $: selectedCommits = brushSelection ? commits.filter(isCommitSelected) : [];
+    $: hasSelection = brushSelection && selectedCommits.length > 0;
 
     async function dotInteraction (index: number, e: Event) {
         let hoveredDot = e.target;
@@ -128,6 +155,19 @@
         else if (e.type === "mouseleave" || e.type === "blur") {
             hoveredCommitIdx = -1;
         }
+    }
+
+    function brushed(e: d3.D3BrushEvent<unknown>) {
+        brushSelection = e.selection as [[number, number], [number, number]] | null;
+    }
+
+    function isCommitSelected (commit: CommitInstance) {
+        if (!brushSelection) return false;
+        let min = {x: brushSelection[0][0], y: brushSelection[0][1]};
+        let max = {x: brushSelection[1][0], y: brushSelection[1][1]};
+        let x = xScale(commit.datetime);
+        let y = yScale(commit.hourFrac);
+        return x >= min.x && x <= max.x && y >= min.y && y <= max.y;
     }
 
     yScale = d3.scaleLinear()
@@ -148,6 +188,13 @@
             .tickFormat(() => "")
             .tickSize(-usableArea.width)
         );
+    }
+
+    $: {
+        // activate brush
+        d3.select(svg).call(d3.brush().on("start brush end", brushed));
+        // keep tooltips available by raising above brush overlay
+        d3.select(svg).selectAll(".dots, .overlay ~ *").raise();
     }
 
     onMount(async() => {
@@ -232,14 +279,17 @@
 <h1>Meta</h1>
 
 <Stats data={stats} />
+<p>{hasSelection ? selectedCommits.length : "No"} commit(s) selected</p>
+
 <p>Commits by time of day</p>
-<svg viewBox="0 0 {width} {height}">
+<svg viewBox="0 0 {width} {height}" bind:this={svg}>
     <g transform="translate(0, {usableArea.bottom})" bind:this={xAxis} />
     <g transform="translate({usableArea.left}, 0)" bind:this={yAxis} />
     <g class="gridlines" transform="translate({usableArea.left}, 0)" bind:this={yAxisGridlines} />
     <g class="dots">
         {#each commits as commit, index }
             <circle
+                class:selected={ isCommitSelected(commit) }
                 cx={ xScale(commit.datetime) }
                 cy={ yScale(commit.hourFrac) }
                 r={ rScale(commit.totalLines) }
