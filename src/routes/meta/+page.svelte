@@ -38,6 +38,9 @@
         &:hover {
             transform: scale(1.5);
         }
+        &:not(:hover) {
+            fill-opacity: 0.4;
+        }
     }
 </style>
 
@@ -96,6 +99,7 @@
     usableArea.height = usableArea.bottom - usableArea.top;
     let yScale: d3.ScaleLinear<number, number>;
     let xScale: d3.ScaleTime<number, number>;
+    let rScale: d3.ScaleLinear<number, number>;
     let xAxis: SVGGElement
     let yAxis: SVGGElement;
     let yAxisGridlines: SVGGElement;
@@ -184,7 +188,7 @@
 
             return ret;
         });
-
+        commits = d3.sort(commits, d => -d.totalLines);
     })
 
     let files: string[] = [];
@@ -218,8 +222,10 @@
         yScale = d3.scaleLinear([24, 0], [usableArea.bottom, usableArea.top]);
         const dtsMinMax = d3.extent(d3.map(commits, c => c.datetime)) as Date[];
         xScale = d3.scaleTime(dtsMinMax, [usableArea.left, usableArea.right]);
-        colorScale = d3.scaleLinear<string>().domain([0,24]).range(["pink", "royalBlue"])
+        colorScale = d3.scaleLinear<string>().domain([0,24]).range(["orange", "royalBlue"])
 
+        const linesMinMax = d3.extent(d3.map(commits, c => c.totalLines)) as number[];        
+        rScale = d3.scaleSqrt<number>(linesMinMax, [2, 30])
     }
 </script>
 
@@ -236,7 +242,7 @@
             <circle
                 cx={ xScale(commit.datetime) }
                 cy={ yScale(commit.hourFrac) }
-                r="5"
+                r={ rScale(commit.totalLines) }
                 fill={ colorScale(commit.hourFrac) }
                 on:mouseenter={e => dotInteraction(index, e)}
 	            on:mouseleave={e => dotInteraction(index, e)}
